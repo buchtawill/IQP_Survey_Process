@@ -228,15 +228,17 @@ def plot_other(df: pd.DataFrame, title: str, column:str):
 
     x, y = list(zip(*sorted(zip(x, y), reverse=False)))
 
-    print(x)
-    print(y)
+    #print(x)
+    #print(y)
     
     plt.bar(x, y, align='center')
-    
     plt.title(f"{title} (n={len(df[column])})")
     plt.ylabel("Count")
     plt.xlabel("")
 
+    # Add labels to the bars
+    for i, v in enumerate(y):
+        plt.text(i, v + 0.1, str(v), ha='center', va='bottom')  # Adjust the + 0.1 and 'bottom' as needed for positioning
 
     if(SAVE):
         plt.savefig(OUTPUT_IMAGE_LOCATION + column + '.png', transparent=IMAGE_TRANSPARENCY, bbox_inches='tight')
