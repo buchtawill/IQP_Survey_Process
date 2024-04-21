@@ -211,7 +211,7 @@ def plot_viewmode(df: pd.DataFrame, title: str):
 
 
 
-def plot_other(df: pd.DataFrame, title: str, column:str):
+def plot_other_bar(df: pd.DataFrame, title: str, column:str):
 
     d = {}
     x = []
@@ -226,11 +226,6 @@ def plot_other(df: pd.DataFrame, title: str, column:str):
         x.append(i[0])
         y.append(i[1])
 
-    x, y = list(zip(*sorted(zip(x, y), reverse=False)))
-
-    #print(x)
-    #print(y)
-    
     plt.bar(x, y, align='center')
     plt.title(f"{title} (n={len(df[column])})")
     plt.ylabel("Count")
@@ -259,13 +254,14 @@ def plot_likert(df: pd.DataFrame, title: str, column:str):
     plt.title(f"{title} (n={len(df[column])})")
     plt.ylabel("Count")
     plt.xlabel("")
-    plt.show()
-
+    # Add labels to the bars
+    for i, v in enumerate(y):
+        plt.text(i, v + 0.1, str(v), ha='center', va='bottom')  # Adjust the + 0.1 and 'bottom' as needed for positioning
+    
     if(SAVE):
         plt.savefig(OUTPUT_IMAGE_LOCATION + column + '.png', transparent=IMAGE_TRANSPARENCY, bbox_inches='tight')
-
-
-
+    
+    plt.show()
 
 if __name__ == '__main__':
 
@@ -299,10 +295,9 @@ if __name__ == '__main__':
         
 
     setMatplotParams()
-    plot_other(data, 'Are You a Local?', 'local resident')
-    #plot_country(data)
-    #plot_viewmode(data, "View Mode")
-    #plot_likert(data, "Overall Experience", 'overall experience')
+    plot_other_bar(data, 'Are You a Local?', 'local resident')
+    plot_other_bar(data, "Age", 'age')
+    plot_likert(data, "Overall Experience", 'overall experience')
 
     
     
