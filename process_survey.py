@@ -231,8 +231,8 @@ def plot_other(df: pd.DataFrame, title: str, column:str):
     print(x)
     print(y)
     
-    plt.bar(range(len(d)), list(d.values()), align='center')
-    plt.xticks(range(len(d)), list(d.keys()))
+    plt.bar(x, y, align='center')
+    
     plt.title(f"{title} (n={len(df[column])})")
     plt.ylabel("Count")
     plt.xlabel("")
