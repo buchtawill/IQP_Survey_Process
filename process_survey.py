@@ -6,6 +6,7 @@ import pandas as pd                     # type: ignore
 import numpy as np                      # type: ignore
 import os
 import shutil
+import math
 
 '''
 
@@ -177,6 +178,7 @@ IMAGE_TEXT_COLOR = 'black'
 IMAGE_AXIS_COLOR = 'black'
 OUTPUT_IMAGE_LOCATION = "./out/"
 SAVE = True
+DPI = 300
 
 def setMatplotParams():
     matplotlib.rcParams['text.color'] = IMAGE_TEXT_COLOR
@@ -185,34 +187,33 @@ def setMatplotParams():
     matplotlib.rcParams['ytick.color'] = IMAGE_TEXT_COLOR
     matplotlib.rcParams['axes.edgecolor'] = IMAGE_AXIS_COLOR
 
-def plot_country(df: pd.DataFrame, title: str):
-    bar_graph_ax = df['country'].value_counts(sort=True).plot(kind='bar')
-    plt.bar_label(bar_graph_ax.containers[0])
-    plt.xticks(rotation=0, ha='center')
-    plt.title(f"{title} (n={len(df['country'])})")
-    plt.ylabel("Count")
-    plt.xlabel("Country")
-    #plt.savefig(OUTPUT_IMAGE_LOCATION + 'ages.png', transparent=IMAGE_TRANSPARENCY, bbox_inches='tight')
-    plt.show()
 
-def plot_viewmode(df: pd.DataFrame, title: str):
-    bar_graph_ax = df['view mode'].value_counts(sort=True).plot(kind='bar')
-    plt.bar_label(bar_graph_ax.containers[0])
-    #bar_graph_ax.set_xticklabels(['Brother', 'Bruh', 'Otto'])
-    plt.xticks(rotation=0, ha='center')
-    plt.title(f"{title} (n={len(df['country'])})")
-    plt.ylabel("Count")
-    plt.xlabel("")
-    #plt.savefig(OUTPUT_IMAGE_LOCATION + 'ages.png', transparent=IMAGE_TRANSPARENCY, bbox_inches='tight')
-    plt.show()
+def selectionSort(x, y, reverse = False):
+    #selection sort bc it's OP for small sized arrays
+    
+    if(reverse is False):
+        for i in range(len(y)):
+            smallest_i = i
+            for j in range(i+1, len(y)):
+                if(y[j] < y[smallest_i]):
+                    smallest_i = j
+            
+            (x[i], x[smallest_i]) = (x[smallest_i], x[i])
+            (y[i], y[smallest_i]) = (y[smallest_i], y[i])
+            
+    else:
+        for i in range(len(y)):
+            biggest_i = i
+            for j in range(i+1, len(y)):
+                if(y[j] > y[biggest_i]):
+                    biggest_i = j
+            
+            (x[i], x[biggest_i]) = (x[biggest_i], x[i])
+            (y[i], y[biggest_i]) = (y[biggest_i], y[i])
 
-
-
-
-
-
-def plot_other_bar(df: pd.DataFrame, title: str, column:str):
-
+def plot_other_bar(df: pd.DataFrame, title: str, column:str, show=False, sort='up'):
+    plt.cla()
+    
     d = {}
     x = []
     y = []
@@ -220,12 +221,22 @@ def plot_other_bar(df: pd.DataFrame, title: str, column:str):
         d[option] = int(0)
 
     for row in df[column]:
-        d[row] = d[row] + int(1)
+        #if a new response, add it to the dict (country or gender)
+        if(row not in d):
+            d[row] = int(1)
+        else:    
+            d[row] = d[row] + int(1)
 
     for i in d.items():
         x.append(i[0])
         y.append(i[1])
-
+    
+    if(sort == 'up'):
+        selectionSort(x, y, False)
+    elif(sort =='down'):
+        selectionSort(x, y, True)
+        
+    
     plt.bar(x, y, align='center')
     plt.title(f"{title} (n={len(df[column])})")
     plt.ylabel("Count")
@@ -236,32 +247,38 @@ def plot_other_bar(df: pd.DataFrame, title: str, column:str):
         plt.text(i, v + 0.1, str(v), ha='center', va='bottom')  # Adjust the + 0.1 and 'bottom' as needed for positioning
 
     if(SAVE):
-        plt.savefig(OUTPUT_IMAGE_LOCATION + column + '.png', transparent=IMAGE_TRANSPARENCY, bbox_inches='tight')
-    plt.show()
+        plt.savefig(OUTPUT_IMAGE_LOCATION + column + '.png', transparent=IMAGE_TRANSPARENCY, bbox_inches='tight', dpi=DPI)
+    if(show):
+        plt.show()
 
 
-def plot_likert(df: pd.DataFrame, title: str, column:str):
-
+def plot_likert(df: pd.DataFrame, title: str, column:str, show=False):
+    plt.cla()
+    
     x = response_options[column] # 'unlikely', 'neutral', ....
     y = np.zeros(5, dtype=int)
 
     for entry in df[column]:
-        y[entry-1] += 1
+        if(not math.isnan(entry)):
+            entry = int(entry)
+            y[entry-1] += 1
 
     ax = plt.bar(x, y)
     
-    plt.xticks(rotation=0, ha='center')
+    plt.xticks(rotation=35, ha='center')
     plt.title(f"{title} (n={len(df[column])})")
     plt.ylabel("Count")
     plt.xlabel("")
+
     # Add labels to the bars
     for i, v in enumerate(y):
         plt.text(i, v + 0.1, str(v), ha='center', va='bottom')  # Adjust the + 0.1 and 'bottom' as needed for positioning
     
     if(SAVE):
-        plt.savefig(OUTPUT_IMAGE_LOCATION + column + '.png', transparent=IMAGE_TRANSPARENCY, bbox_inches='tight')
+        plt.savefig(OUTPUT_IMAGE_LOCATION + column + '.png', transparent=IMAGE_TRANSPARENCY, bbox_inches='tight', dpi=DPI)
     
-    plt.show()
+    if(show):
+        plt.show()
 
 if __name__ == '__main__':
 
@@ -280,7 +297,6 @@ if __name__ == '__main__':
     cn = cndf_to_en(cn)
     data = pd.concat([en, cn], ignore_index=True)
 
-    #data.to_excel('test.xlsx')
     #i = data[((data.country == 'United States'))].index
     #data = data.drop(i)
 
@@ -293,12 +309,28 @@ if __name__ == '__main__':
         if not os.path.exists(OUTPUT_IMAGE_LOCATION):
             os.makedirs(OUTPUT_IMAGE_LOCATION)
         
-
     setMatplotParams()
-    plot_other_bar(data, 'Are You a Local?', 'local resident')
-    plot_other_bar(data, "Age", 'age')
-    plot_likert(data, "Overall Experience", 'overall experience')
-
+    
+    #              df    plot title                 column title        sort direction (default = up)
+    plot_other_bar(data, "Viewing Device",          'view mode',        sort='up')
+    plot_other_bar(data, 'Are You a Local?',        'local resident',   sort='no')
+    plot_other_bar(data, "Age",                     'age',              sort='no')
+    plot_other_bar(data, "Respondents' Country",    'country',          sort='up')
+    plot_other_bar(data, "Respondents' Gender",     'gender',           sort='down')
+    
+    #likert not sorted
+    plot_likert(data, "Overall Experience",                             'overall experience')
+    plot_likert(data, "Easy to Navigate?",                              'ease of navigation')
+    plot_likert(data, "Enjoyed Presentation of Material",               'enjoyed presentation')
+    plot_likert(data, "Reaction to Load Speed",                         'load speed')
+    plot_likert(data, "Would Recommend to a Friend",                    'recommend to friend')
+    plot_likert(data, "\'This Website Captures Shilin\'s Culture\'",    'captures culture')
+    plot_likert(data, "Would Use Website When Visiting Shilin",         'use when visiting')
+    plot_likert(data, "\'This Website Captures Modernization\'",        'showcases modernization')
+    plot_likert(data, "How Much of an Impact Does the Website Have?",   'impactfulness')
+    
+    #plot_other_bar(data, "Favorite Story",          'favorite story', sort='down')
+    #plot_other_bar(data, "Favorite Place Webpage",  'favorite place', sort='down')
     
     
     
