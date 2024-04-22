@@ -214,7 +214,7 @@ def plot_pie_other(df: pd.DataFrame, title: str, column:str, show=False):
             #colors=['#00aaff', '#aa00ff', '#ff00aa', '#ffaa00', '#aaff00'])
             colors=['#ffaa00', '#aaff00', '#ff00aa', '#aa00ff', '#00aaff'])
     
-    plt.title(f"{title}, group={OUTPUT_IMAGE_LOCATION[2:-1]} (n={np.sum(y)})", y=1.08)
+    plt.title(f"{title}, Group={OUTPUT_IMAGE_LOCATION[2:-1]} (n={np.sum(y)})", y=1.08)
     
     if(SAVE):
         plt.savefig(OUTPUT_IMAGE_LOCATION + column + '.png', transparent=IMAGE_TRANSPARENCY, bbox_inches='tight', dpi=DPI)
@@ -235,7 +235,7 @@ def plot_other_bar(df: pd.DataFrame, title: str, column:str, show=False, sort='u
     
     plt.bar(x, y, align='center')
     plt.xticks(rotation=15, ha='center')
-    plt.title(f"{title}, group={OUTPUT_IMAGE_LOCATION[2:-1]} (n={len(df[column])})")
+    plt.title(f"{title}, Group={OUTPUT_IMAGE_LOCATION[2:-1]} (n={len(df[column])})")
     plt.ylabel("Count")
     plt.gca().yaxis.set_major_formatter(ticker.FormatStrFormatter('%d'))
     plt.xlabel("")
@@ -299,8 +299,12 @@ def plot_likert(df: pd.DataFrame, title: str, column:str, show=False):
     avg = float(sum) / total_resp
     ax = plt.bar(x, y)
     
-    plt.xticks(rotation=15, ha='center')
-    plt.title(f"{title}, group={OUTPUT_IMAGE_LOCATION[2:-1]} (n={len(df[column])}, avg={round(avg,1)})")
+    for i in range(len(x)):
+        x[i] = x[i]+f' ({i+1})'
+    
+    x_axis = np.arange(len(x)) 
+    plt.xticks(x_axis, x, rotation=20, ha='center')
+    plt.title(f"{title}, Group={OUTPUT_IMAGE_LOCATION[2:-1]} (n={len(df[column])}, avg={round(avg,1)})")
     plt.ylabel("Count")
     plt.xlabel("")
 
@@ -325,22 +329,34 @@ def likertTwoGroups(df1: pd.DataFrame, label1:str, df2: pd.DataFrame, label2: st
     y2 = np.zeros(len(x), dtype=int)
     
     for entry in df1[column]:
-        #print(entry)
         if(not math.isnan(entry)):
             entry = int(entry)
             y1[entry-1] += 1
-    #print('----------------')
+            
     for entry in df2[column]:
-        #print(entry)
         if(not math.isnan(entry)):
             entry = int(entry)
             y2[entry-1] += 1
     
-    x_axis = np.arange(len(x)) 
-    plt.bar(x_axis - barSpacing, y1, 0.4, label = label1) 
-    plt.bar(x_axis + barSpacing, y2, 0.4, label = label2) 
+    totaly1 = np.sum(y1)
+    sum = 0
+    for i in range(len(y1)):
+        sum += y1[i] * (i+1)
+    y1avg = float(sum) / totaly1
     
-    plt.xticks(x_axis, x, rotation=15, ha='center')
+    totaly2 = np.sum(y2)
+    sum = 0
+    for i in range(len(y2)):
+        sum += y2[i] * (i+1)
+    y2avg = float(sum) / totaly2
+    
+    x_axis = np.arange(len(x)) 
+    plt.bar(x_axis - barSpacing, y1, 0.4, label = f'{label1} avg={round(y1avg,1)}') 
+    plt.bar(x_axis + barSpacing, y2, 0.4, label = f'{label2} avg={round(y2avg,1)}') 
+    
+    for i in range(len(x)):
+        x[i] = x[i]+f' ({i+1})'
+    plt.xticks(x_axis, x, rotation=20, ha='center')
     #plt.title(f"{plottitle}, group={OUTPUT_IMAGE_LOCATION[2:-1]} (n={len(df[column])}, avg={round(avg,1)})")
     plt.title(f"{plottitle} (n={len(df1[column])+len(df2[column])})")
     plt.ylabel("Count")
@@ -482,7 +498,7 @@ def maleOnly(data):
 IMAGE_TRANSPARENCY = False
 IMAGE_TEXT_COLOR = 'black'
 IMAGE_AXIS_COLOR = 'black'
-OUTPUT_IMAGE_LOCATION = "./visitors_vs_locals/"
+OUTPUT_IMAGE_LOCATION = "./all/"
 SAVE = True
 DPI = 300
 
@@ -524,6 +540,7 @@ if __name__ == '__main__':
     #otherTwoGroups(guys, 'Male', girls, "Female", "Favorite Story (Female and Male)", 'favorite story')
     #otherTwoGroups(guys, 'Male', girls, "Female", "Favorite place (Female and Male)", 'favorite place')
     
-    #default_graphs(visitors)
-    two_group_likerts(taiwanese, 'Taiwanese', visitors, 'Not Taiwanese')
-    
+    default_graphs(data)
+    #two_group_likerts(guys, 'Male', girls, 'Female')
+    #two_group_likerts(taiwanese, 'Taiwanese', visitors, 'Visitors')
+    #two_group_likerts(old, '30+', young, '18-29')
