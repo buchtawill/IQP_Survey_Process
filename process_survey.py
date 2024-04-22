@@ -53,6 +53,8 @@ Data Columns
     Make bar chart of Gender of respondents
     Make graphs of averages across the age groups
     Show bar charts of male and female responses
+    
+    Colors: https://www.color-hex.com/color-palette/96986
 '''
 
 response_options = {
@@ -218,30 +220,6 @@ def plot_pie_other(df: pd.DataFrame, title: str, column:str, show=False):
         plt.savefig(OUTPUT_IMAGE_LOCATION + column + '.png', transparent=IMAGE_TRANSPARENCY, bbox_inches='tight', dpi=DPI)
     if(show):
         plt.show()
-    
-    
-    '''fig, ax = plt.subplots(figsize=(6, 3), subplot_kw=dict(aspect="equal"))
-
-    recipe = x
-    data = y
-
-    wedges, texts = ax.pie(data, wedgeprops=dict(width=0.5), startangle=-40)
-
-    bbox_props = dict(boxstyle="square,pad=0.3", fc="w", ec="k", lw=0.72)
-    kw = dict(arrowprops=dict(arrowstyle="-"),
-            bbox=bbox_props, zorder=0, va="center")
-
-    for i, p in enumerate(wedges):
-        ang = (p.theta2 - p.theta1)/2. + p.theta1
-        y = np.sin(np.deg2rad(ang))
-        x = np.cos(np.deg2rad(ang))
-        horizontalalignment = {-1: "right", 1: "left"}[int(np.sign(x))]
-        connectionstyle = f"angle,angleA=0,angleB={ang}"
-        kw["arrowprops"].update({"connectionstyle": connectionstyle})
-        ax.annotate(recipe[i], xy=(x, y), xytext=(1.35*np.sign(x), 1.4*y),
-                    horizontalalignment=horizontalalignment, **kw)
-
-    ax.set_title("Matplotlib bakery: A donut")'''
 
 
 def plot_other_bar(df: pd.DataFrame, title: str, column:str, show=False, sort='up'):
@@ -271,6 +249,36 @@ def plot_other_bar(df: pd.DataFrame, title: str, column:str, show=False, sort='u
     if(show):
         plt.show()
 
+def otherTwoGroups(df1: pd.DataFrame, label1:str, df2: pd.DataFrame, label2: str, plottitle: str, column:str, show=False):
+    
+    plt.cla()
+    barSpacing = 0.2
+    x, y1 = columnToXY(df1, column)
+    x, y2 = columnToXY(df2, column)
+    
+    x_axis = np.arange(len(x)) 
+    plt.bar(x_axis - barSpacing, y1, 0.4, label = label1) 
+    plt.bar(x_axis + barSpacing, y2, 0.4, label = label2) 
+    
+    plt.xticks(x_axis, x, rotation=15, ha='center')
+    #plt.title(f"{plottitle}, group={OUTPUT_IMAGE_LOCATION[2:-1]} (n={len(df[column])}, avg={round(avg,1)})")
+    plt.title(f"{plottitle} (n={len(df1[column])+len(df2[column])})")
+    plt.ylabel("Count")
+    plt.xlabel("")
+    plt.legend() 
+    plt.gca().yaxis.set_major_formatter(ticker.FormatStrFormatter('%d'))
+
+    # Add labels to the bars
+    for i, v in enumerate(y1):
+        plt.text(i-barSpacing, v + 0.1, str(v), ha='center', va='bottom')  # Adjust the + 0.1 and 'bottom' as needed for positioning
+    for i, v in enumerate(y2):
+        plt.text(i+barSpacing, v + 0.1, str(v), ha='center', va='bottom')  # Adjust the + 0.1 and 'bottom' as needed for positioning
+    
+    if(SAVE):
+        plt.savefig(f'{OUTPUT_IMAGE_LOCATION}{plottitle}.png', transparent=IMAGE_TRANSPARENCY, bbox_inches='tight', dpi=DPI)
+    
+    if(show):
+        plt.show()
 
 def plot_likert(df: pd.DataFrame, title: str, column:str, show=False):
     plt.cla()
@@ -306,6 +314,51 @@ def plot_likert(df: pd.DataFrame, title: str, column:str, show=False):
     if(show):
         plt.show()
 
+
+def likertTwoGroups(df1: pd.DataFrame, label1:str, df2: pd.DataFrame, label2: str, plottitle: str, column:str, show=False):
+    plt.cla()
+    
+    barSpacing = 0.2
+    
+    x = response_options[column] # 'unlikely', 'neutral', ....
+    y1 = np.zeros(len(x), dtype=int)
+    y2 = np.zeros(len(x), dtype=int)
+    
+    for entry in df1[column]:
+        #print(entry)
+        if(not math.isnan(entry)):
+            entry = int(entry)
+            y1[entry-1] += 1
+    #print('----------------')
+    for entry in df2[column]:
+        #print(entry)
+        if(not math.isnan(entry)):
+            entry = int(entry)
+            y2[entry-1] += 1
+    
+    x_axis = np.arange(len(x)) 
+    plt.bar(x_axis - barSpacing, y1, 0.4, label = label1) 
+    plt.bar(x_axis + barSpacing, y2, 0.4, label = label2) 
+    
+    plt.xticks(x_axis, x, rotation=15, ha='center')
+    #plt.title(f"{plottitle}, group={OUTPUT_IMAGE_LOCATION[2:-1]} (n={len(df[column])}, avg={round(avg,1)})")
+    plt.title(f"{plottitle} (n={len(df1[column])+len(df2[column])})")
+    plt.ylabel("Count")
+    plt.xlabel("")
+    plt.legend() 
+    plt.gca().yaxis.set_major_formatter(ticker.FormatStrFormatter('%d'))
+
+    # Add labels to the bars
+    for i, v in enumerate(y1):
+        plt.text(i-barSpacing, v + 0.1, str(v), ha='center', va='bottom')  # Adjust the + 0.1 and 'bottom' as needed for positioning
+    for i, v in enumerate(y2):
+        plt.text(i+barSpacing, v + 0.1, str(v), ha='center', va='bottom')  # Adjust the + 0.1 and 'bottom' as needed for positioning
+    
+    if(SAVE):
+        plt.savefig(f'{OUTPUT_IMAGE_LOCATION}{plottitle}.png', transparent=IMAGE_TRANSPARENCY, bbox_inches='tight', dpi=DPI)
+    
+    if(show):
+        plt.show()
 
 def fixFavoriteStory(data: pd.DataFrame) -> pd.DataFrame:
     #fix favorite story column (parenthesis bug)
@@ -346,6 +399,49 @@ def fixFavoritePlace(data: pd.DataFrame) -> pd.DataFrame:
     
     return data
 
+def default_graphs(data: pd.DataFrame):
+    #              df    plot title                     column title        sort direction (default = up)
+    plot_other_bar(data, "Favorite Story",              'favorite story',   sort='no')
+    plot_other_bar(data, "Favorite \'Place\' Webpage",  'favorite place',   sort='down')
+
+    plot_other_bar(data, "Viewing Device",              'view mode',        sort='up')
+    plot_other_bar(data, 'Are You a Local?',            'local resident',   sort='no')
+    plot_other_bar(data, "Age",                         'age',              sort='no')
+    plot_other_bar(data, "Respondents' Country",        'country',          sort='up')
+    plot_other_bar(data, "Respondents' Gender",         'gender',           sort='down')
+
+    #likert - not sorted
+    plot_likert(data, "Overall Experience",                             'overall experience')
+    plot_likert(data, "Easy to Navigate?",                              'ease of navigation')
+    plot_likert(data, "Enjoyed Presentation of Material",               'enjoyed presentation')
+    plot_likert(data, "Reaction to Load Speed",                         'load speed')
+    plot_likert(data, "Would Recommend to a Friend",                    'recommend to friend')
+    plot_likert(data, "\'This Website Captures Shilin\'s Culture\'",    'captures culture')
+    plot_likert(data, "Would Use Website When Visiting Shilin",         'use when visiting')
+    plot_likert(data, "\'This Website Captures Modernization\'",        'showcases modernization')
+    plot_likert(data, "How Much of an Impact Do You Feel?",             'impactfulness')
+    
+    plot_pie_other(data, "Country", 'country')
+    plot_pie_other(data, "Favorite_Story", 'favorite story')
+    plot_pie_other(data, "Favorite_Place", 'favorite place')
+    plot_pie_other(data, "View_Mode", 'view mode')
+    plot_pie_other(data, "Are_you_local", 'local resident')
+    plot_pie_other(data, "Age", 'age')
+    plot_pie_other(data, "Gender", 'gender')
+
+def two_group_likerts(df1: pd.DataFrame, t1: str, df2: pd.DataFrame, t2: str):
+    
+    likertTwoGroups(df1, t1, df2, t2, f"Overall Experience ({t1} and {t2})", 'overall experience')
+    likertTwoGroups(df1, t1, df2, t2, f"Ease of Navigation ({t1} and {t2})", 'ease of navigation')
+    likertTwoGroups(df1, t1, df2, t2, f"Enjoyed Presentation ({t1} and {t2})", 'enjoyed presentation')
+    likertTwoGroups(df1, t1, df2, t2, f"Response to Load Speed ({t1} and {t2})", 'load speed')
+    
+    likertTwoGroups(df1, t1, df2, t2, f"Recommend to a Friend ({t1} and {t2})", 'recommend to friend')
+    likertTwoGroups(df1, t1, df2, t2, f"Captures Culture ({t1} and {t2})", 'captures culture')
+    likertTwoGroups(df1, t1, df2, t2, f"Showcases Modernization ({t1} and {t2})", 'showcases modernization')
+    likertTwoGroups(df1, t1, df2, t2, f"Impactfulness ({t1} and {t2})", 'impactfulness')
+    likertTwoGroups(df1, t1, df2, t2, f"Would Use When Visiting ({t1} and {t2})", 'use when visiting')
+    
 
 def taiwaneseOnly(data):
     i = data[((data.country != 'Taiwan'))].index
@@ -386,7 +482,7 @@ def maleOnly(data):
 IMAGE_TRANSPARENCY = False
 IMAGE_TEXT_COLOR = 'black'
 IMAGE_AXIS_COLOR = 'black'
-OUTPUT_IMAGE_LOCATION = "./all/"
+OUTPUT_IMAGE_LOCATION = "./visitors_vs_locals/"
 SAVE = True
 DPI = 300
 
@@ -399,13 +495,20 @@ if __name__ == '__main__':
     en = pd.read_excel(source, 'English', header=None, names=column_labels)
     cn = cndf_to_en(cn)
     data = pd.concat([en, cn], ignore_index=True)
+    data = fixFavoritePlace(data)   #remove chinese characters and fix parenthesis bug
+    data = fixFavoriteStory(data)   #remove chinese characters and fix parenthesis bug
+    data = setOtherCountries(data)  #countries other than US and Taiwan will be 'other'
     
-    data = fixFavoritePlace(data)
-    data = fixFavoriteStory(data)
-    data = setOtherCountries(data) #countries other than US and Taiwan will be 'other'
+    print(f"Total responses: {len(data['country'])}")
     
-    #specify which groups to do
-    #data = femaleOnly(data)
+    guys  = maleOnly(data)
+    girls = femaleOnly(data)
+    
+    taiwanese = taiwaneseOnly(data)
+    visitors  = otherCountriesOnly(data)
+    
+    old = oldGroups(data)
+    young = youngGroup(data)
     
     if(SAVE):
         try:
@@ -417,34 +520,10 @@ if __name__ == '__main__':
         
     setMatplotParams()
     
-    #              df    plot title                     column title        sort direction (default = up)
-    plot_other_bar(data, "Favorite Story",              'favorite story',   sort='no')
-    plot_other_bar(data, "Favorite \'Place\' Webpage",  'favorite place',   sort='down')
-
-    plot_other_bar(data, "Viewing Device",              'view mode',        sort='up')
-    plot_other_bar(data, 'Are You a Local?',            'local resident',   sort='no')
-    plot_other_bar(data, "Age",                         'age',              sort='no')
-    plot_other_bar(data, "Respondents' Country",        'country',          sort='up')
-    plot_other_bar(data, "Respondents' Gender",         'gender',           sort='down')
-
-    #likert - not sorted
-    plot_likert(data, "Overall Experience",                             'overall experience')
-    plot_likert(data, "Easy to Navigate?",                              'ease of navigation')
-    plot_likert(data, "Enjoyed Presentation of Material",               'enjoyed presentation')
-    plot_likert(data, "Reaction to Load Speed",                         'load speed')
-    plot_likert(data, "Would Recommend to a Friend",                    'recommend to friend')
-    plot_likert(data, "\'This Website Captures Shilin\'s Culture\'",    'captures culture')
-    plot_likert(data, "Would Use Website When Visiting Shilin",         'use when visiting')
-    plot_likert(data, "\'This Website Captures Modernization\'",        'showcases modernization')
-    plot_likert(data, "How Much of an Impact Do You Feel?",             'impactfulness')
+    #likertTwoGroups(guys, 'Male', girls, 'Female', "Would Recommend to a Friend (Female and Male)", 'recommend to friend')
+    #otherTwoGroups(guys, 'Male', girls, "Female", "Favorite Story (Female and Male)", 'favorite story')
+    #otherTwoGroups(guys, 'Male', girls, "Female", "Favorite place (Female and Male)", 'favorite place')
     
-    
-    plot_pie_other(data, "Country", 'country')
-    plot_pie_other(data, "Favorite_Story", 'favorite story')
-    plot_pie_other(data, "Favorite_Place", 'favorite place')
-    plot_pie_other(data, "View_Mode", 'view mode')
-    plot_pie_other(data, "Are_you_local", 'local resident')
-    plot_pie_other(data, "Age", 'age')
-    plot_pie_other(data, "Gender", 'gender')
-    
+    #default_graphs(visitors)
+    two_group_likerts(taiwanese, 'Taiwanese', visitors, 'Not Taiwanese')
     
