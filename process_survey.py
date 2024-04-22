@@ -10,7 +10,6 @@ import shutil
 import math
 
 '''
-
 Input excel file: 2 sheets, first sheet english responses, second sheet chinese
 Data Columns
 ------------
@@ -37,9 +36,11 @@ Data Columns
     Impact of website on survey taker........['None', ---, ----, ---, 'Very Impactful']
     
     Favorite Story      ['Wu, Jian-Hong', 'Wang, Chun-Kai', 'Lily']
+                        ['Wu, Jian-Hong (吳儉鴻)', 'Wang, Chun-Kai (王俊凱)', 'Lily (莉莉)']
     Why?                __________  Short Answer  ______
 
     Favorite Place      ['Zhishanyan Huiji Temple', 'Taipei MRT', 'Shilin Elementary School', 'Shilin Paper Mill', 'Shilin Architecture']
+                        ['Zhishanyan Huiji Temple (芝山巖惠濟宮)', 'Taipei MRT (台北捷運)', 'Shilin Elementary School (士林國小)', 'Shilin Paper Mill (士林紙廠)', 'Shilin Architecture (士林建築)']
     Why?                __________  Short Answer  ______
 
     Something you liked about the website
@@ -53,31 +54,6 @@ Data Columns
     Make graphs of averages across the age groups
     Show bar charts of male and female responses
 '''
-
-'''
-country_options =    ['United States', 'Taiwan', 'Other']
-resident_options =   ['Yes', 'No']
-age_options =        ['18-29', '30-44', '45-59', '60+']
-gender_options =     ['Male', 'Female', 'Do not wish to say', 'other']
-view_options =       ['Smartphone', 'Tablet', 'Desktop / Laptop']
-
-experience_options = ['Very Poor', 'Poor', 'Neutral', 'Good',  'Very Good']
-navigation_options = ['Very Difficult', 'Difficult', 'Neutral', 'Easy', 'Very Easy']
-present_options =    ['Stronly Disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly Agree']
-speed_options =      ['Very Dissatisfied', 'Dissatisfied', 'Neutral', 'Satisfied', 'Very Satisfied']  
-
-friend_options =     ['Very Unlikely', 'Unlikely', 'Neutral', 'Likely', 'Very Likely']
-culture_options =    ['Stronly Disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly Agree']
-visiting_options =   ['Very Unlikely', 'Unlikely', 'Neutral', 'Likely', 'Very Likely']
-modernize_options =  ['Stronly Disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly Agree']
-impact_options   =   ['None', '---', '---', '---', 'Very Impactful']
-
-fav_story_options =  ['Wu, Jian-Hong (吳儉鴻)', 'Wang, Chun-Kai (王俊凱)', 'Lily (莉莉)']
-fav_story_reason = None
-fav_place_options =  ['Zhishanyan Huiji Temple (芝山巖惠濟宮)', 'Taipei MRT (台北捷運)', 'Shilin Elementary School (士林國小)', 'Shilin Paper Mill (士林紙廠)', 'Shilin Architecture (士林建築)']
-
-'''
-
 
 response_options = {
     'country' :                 ['United States', 'Taiwan'], #or other
@@ -98,9 +74,6 @@ response_options = {
     'impactfulness'   :         ['None', 'Very Little', 'Somewhat', 'Impactful', 'Very Impactful'],
 
     'favorite story' :          ['Wu, Jian-Hong', 'Wang, Chun-Kai', 'Lily'],
-    #'favorite place' :          ['Zhishanyan Huiji Temple (芝山巖惠濟宮)', 'Taipei MRT (台北捷運)', 
-    #                             'Shilin Elementary School (士林國小)', 'Shilin Paper Mill (士林紙廠)', 
-    #                             'Shilin Architecture (士林建築)'],
     'favorite place':           ['Huiji Temple', 'Taipei MRT', 'Shilin Elementary', 'Shilin Paper Mill', 'Shilin Architecture']
 }
 
@@ -110,7 +83,7 @@ column_labels = ['timestamp', 'country', 'local resident', 'age', 'gender', 'vie
                'favorite story', 'why story', 'favorite place', 'why place',                                                #option, short ans
                'something you liked', 'something you disliked', 'want to add anything', 'other comments']                   #long answer
 
-
+#convert chinese responses to english
 def cndf_to_en(cn: pd.DataFrame) -> pd.DataFrame:
     #country you live in
     for i in range(len(cn['country'])):
@@ -159,7 +132,6 @@ def cndf_to_en(cn: pd.DataFrame) -> pd.DataFrame:
             cn.loc[i, 'view mode'] = 'Desktop / Laptop'
     
     return cn
-
 
 
 def setMatplotParams():
@@ -240,7 +212,7 @@ def plot_pie_other(df: pd.DataFrame, title: str, column:str, show=False):
             #colors=['#00aaff', '#aa00ff', '#ff00aa', '#ffaa00', '#aaff00'])
             colors=['#ffaa00', '#aaff00', '#ff00aa', '#aa00ff', '#00aaff'])
     
-    plt.title(f"{title} n=({np.sum(y)})", y=1.08)
+    plt.title(f"{title}, group={OUTPUT_IMAGE_LOCATION[2:-1]} (n={np.sum(y)})", y=1.08)
     
     if(SAVE):
         plt.savefig(OUTPUT_IMAGE_LOCATION + column + '.png', transparent=IMAGE_TRANSPARENCY, bbox_inches='tight', dpi=DPI)
@@ -285,7 +257,7 @@ def plot_other_bar(df: pd.DataFrame, title: str, column:str, show=False, sort='u
     
     plt.bar(x, y, align='center')
     plt.xticks(rotation=15, ha='center')
-    plt.title(f"{title} (n={len(df[column])})")
+    plt.title(f"{title}, group={OUTPUT_IMAGE_LOCATION[2:-1]} (n={len(df[column])})")
     plt.ylabel("Count")
     plt.gca().yaxis.set_major_formatter(ticker.FormatStrFormatter('%d'))
     plt.xlabel("")
@@ -320,7 +292,7 @@ def plot_likert(df: pd.DataFrame, title: str, column:str, show=False):
     ax = plt.bar(x, y)
     
     plt.xticks(rotation=15, ha='center')
-    plt.title(f"{title} (n={len(df[column])}, avg={round(avg,1)})")
+    plt.title(f"{title}, group={OUTPUT_IMAGE_LOCATION[2:-1]} (n={len(df[column])}, avg={round(avg,1)})")
     plt.ylabel("Count")
     plt.xlabel("")
 
@@ -400,13 +372,13 @@ def oldGroups(data):
     return data
 
 def femaleOnly(data):
-    i = data[((data.gender == 'Male'))].index
+    i = data[((data.gender != 'Female'))].index
     data = data.drop(i)
     data.reset_index()
     return data
 
 def maleOnly(data):
-    i = data[((data.gender == 'Female'))].index
+    i = data[((data.gender != 'Male'))].index
     data = data.drop(i)
     data.reset_index()
     return data
@@ -414,14 +386,13 @@ def maleOnly(data):
 IMAGE_TRANSPARENCY = False
 IMAGE_TEXT_COLOR = 'black'
 IMAGE_AXIS_COLOR = 'black'
-OUTPUT_IMAGE_LOCATION = "./male/"
+OUTPUT_IMAGE_LOCATION = "./all/"
 SAVE = True
 DPI = 300
 
 if __name__ == '__main__':
 
     source = 'responses.xlsx'
-    
     xls = pd.ExcelFile(source)
 
     cn = pd.read_excel(source, 'Chinese', header=None, names=column_labels)
@@ -431,7 +402,10 @@ if __name__ == '__main__':
     
     data = fixFavoritePlace(data)
     data = fixFavoriteStory(data)
-    data = setOtherCountries(data)
+    data = setOtherCountries(data) #countries other than US and Taiwan will be 'other'
+    
+    #specify which groups to do
+    #data = femaleOnly(data)
     
     if(SAVE):
         try:
