@@ -1,7 +1,8 @@
 # coding=utf-8
 import matplotlib                       # type: ignore
 from matplotlib import image            # type: ignore
-from matplotlib import pyplot as plt    # type: ignore
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 import pandas as pd                     # type: ignore
 import numpy as np                      # type: ignore
 import os
@@ -52,6 +53,7 @@ Data Columns
     Make graphs of averages across the age groups
     Show bar charts of male and female responses
 '''
+
 '''
 country_options =    ['United States', 'Taiwan', 'Other']
 resident_options =   ['Yes', 'No']
@@ -78,29 +80,35 @@ fav_place_options =  ['Zhishanyan Huiji Temple (芝山巖惠濟宮)', 'Taipei MR
 
 
 response_options = {
-'country' :                 ['United States', 'Taiwan'], #or other
-'local resident' :          ['Yes', 'No'],
-'age' :                     ['18-29', '30-44', '45-59', '60+'],
-'gender' :                  ['Male', 'Female', 'Do not wish to say'], #or other
-'view mode' :               ['Smartphone', 'Tablet', 'Desktop / Laptop'],
+    'country' :                 ['United States', 'Taiwan'], #or other
+    'local resident' :          ['Yes', 'No'],
+    'age' :                     ['18-29', '30-44', '45-59', '60+'],
+    'gender' :                  ['Male', 'Female', 'Do not wish to say'], #or other
+    'view mode' :               ['Smartphone', 'Tablet', 'Desktop / Laptop'],
 
-'overall experience' :      ['Very Poor', 'Poor', 'Neutral', 'Good',  'Very Good'],
-'ease of navigation' :      ['Very Difficult', 'Difficult', 'Neutral', 'Easy', 'Very Easy'],
-'enjoyed presentation' :    ['Stronly Disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly Agree'],
-'load speed' :              ['Very Dissatisfied', 'Dissatisfied', 'Neutral', 'Satisfied', 'Very Satisfied'],
+    'overall experience' :      ['Very Poor', 'Poor', 'Neutral', 'Good',  'Very Good'],
+    'ease of navigation' :      ['Very Difficult', 'Difficult', 'Neutral', 'Easy', 'Very Easy'],
+    'enjoyed presentation' :    ['Stronly Disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly Agree'],
+    'load speed' :              ['Very Dissatisfied', 'Dissatisfied', 'Neutral', 'Satisfied', 'Very Satisfied'],
 
-'recommend to friend' :     ['Very Unlikely', 'Unlikely', 'Neutral', 'Likely', 'Very Likely'],
-'captures culture' :        ['Stronly Disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly Agree'],
-'use when visiting' :       ['Very Unlikely', 'Unlikely', 'Neutral', 'Likely', 'Very Likely'],
-'showcases modernization' : ['Stronly Disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly Agree'],
-'impactfulness'   :         ['None', 'Very Little', 'Somewhat', 'Impactful', 'Very Impactful'],
+    'recommend to friend' :     ['Very Unlikely', 'Unlikely', 'Neutral', 'Likely', 'Very Likely'],
+    'captures culture' :        ['Stronly Disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly Agree'],
+    'use when visiting' :       ['Very Unlikely', 'Unlikely', 'Neutral', 'Likely', 'Very Likely'],
+    'showcases modernization' : ['Stronly Disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly Agree'],
+    'impactfulness'   :         ['None', 'Very Little', 'Somewhat', 'Impactful', 'Very Impactful'],
 
-'favorite story' :          ['Wu, Jian-Hong', 'Wang, Chun-Kai', 'Lily'],
-#'favorite place' :          ['Zhishanyan Huiji Temple (芝山巖惠濟宮)', 'Taipei MRT (台北捷運)', 
-#                             'Shilin Elementary School (士林國小)', 'Shilin Paper Mill (士林紙廠)', 
-#                             'Shilin Architecture (士林建築)'],
-'favorite place':           ['Huiji Temple', 'Taipei MRT', 'Shilin Elementary', 'Shilin Paper Mill', 'Shilin Architecture']
+    'favorite story' :          ['Wu, Jian-Hong', 'Wang, Chun-Kai', 'Lily'],
+    #'favorite place' :          ['Zhishanyan Huiji Temple (芝山巖惠濟宮)', 'Taipei MRT (台北捷運)', 
+    #                             'Shilin Elementary School (士林國小)', 'Shilin Paper Mill (士林紙廠)', 
+    #                             'Shilin Architecture (士林建築)'],
+    'favorite place':           ['Huiji Temple', 'Taipei MRT', 'Shilin Elementary', 'Shilin Paper Mill', 'Shilin Architecture']
 }
+
+column_labels = ['timestamp', 'country', 'local resident', 'age', 'gender', 'view mode',                                    #options
+               'overall experience', 'ease of navigation', 'enjoyed presentation', 'load speed',                            #likert
+               'recommend to friend', 'captures culture', 'use when visiting', 'showcases modernization', 'impactfulness',  #likert
+               'favorite story', 'why story', 'favorite place', 'why place',                                                #option, short ans
+               'something you liked', 'something you disliked', 'want to add anything', 'other comments']                   #long answer
 
 
 def cndf_to_en(cn: pd.DataFrame) -> pd.DataFrame:
@@ -152,12 +160,7 @@ def cndf_to_en(cn: pd.DataFrame) -> pd.DataFrame:
     
     return cn
 
-IMAGE_TRANSPARENCY = False
-IMAGE_TEXT_COLOR = 'black'
-IMAGE_AXIS_COLOR = 'black'
-OUTPUT_IMAGE_LOCATION = "./not_from_taiwan/"
-SAVE = True
-DPI = 300
+
 
 def setMatplotParams():
     matplotlib.rcParams['text.color'] = IMAGE_TEXT_COLOR
@@ -190,15 +193,13 @@ def selectionSort(x, y, reverse = False):
             (x[i], x[biggest_i]) = (x[biggest_i], x[i])
             (y[i], y[biggest_i]) = (y[biggest_i], y[i])
 
-def plot_other_bar(df: pd.DataFrame, title: str, column:str, show=False, sort='up'):
-    plt.cla()
-    
+#given a pandas column, return x and y with x being labels, y being number of responses
+def columnToXY(df: pd.DataFrame, column: str):
     d = dict()
     x = []
     y = []
 
     for option in response_options[column]:
-        #print(option)
         d[option] = int(0)
     
     #count up all the occurences of each response option
@@ -214,6 +215,67 @@ def plot_other_bar(df: pd.DataFrame, title: str, column:str, show=False, sort='u
     for i in d.items():
         x.append(i[0])
         y.append(int(i[1]))
+        
+    return x,y 
+
+def plot_pie_other(df: pd.DataFrame, title: str, column:str, show=False):
+    plt.cla()
+    x, y = columnToXY(df, column)
+    newx = []
+    newy = []
+    
+    for i in range(len(y)):
+        if(y[i] > 0):
+            newx.append(x[i])
+            newy.append(y[i])
+    x = newx
+    y = newy
+    #selectionSort(x, y)
+    
+    d = pd.DataFrame([x,y])
+    d.to_excel(f"{OUTPUT_IMAGE_LOCATION}{title}.xlsx")
+      
+    plt.pie(y, labels=x, autopct='%1.1f%%', radius=1.25, 
+            #colors=['#4deeea', '#74ee15','#ffaa00', '#ffe700', '#f000ff', '#00aaff'])
+            #colors=['#00aaff', '#aa00ff', '#ff00aa', '#ffaa00', '#aaff00'])
+            colors=['#ffaa00', '#aaff00', '#ff00aa', '#aa00ff', '#00aaff'])
+    
+    plt.title(f"{title} n=({np.sum(y)})", y=1.08)
+    
+    if(SAVE):
+        plt.savefig(OUTPUT_IMAGE_LOCATION + column + '.png', transparent=IMAGE_TRANSPARENCY, bbox_inches='tight', dpi=DPI)
+    if(show):
+        plt.show()
+    
+    
+    '''fig, ax = plt.subplots(figsize=(6, 3), subplot_kw=dict(aspect="equal"))
+
+    recipe = x
+    data = y
+
+    wedges, texts = ax.pie(data, wedgeprops=dict(width=0.5), startangle=-40)
+
+    bbox_props = dict(boxstyle="square,pad=0.3", fc="w", ec="k", lw=0.72)
+    kw = dict(arrowprops=dict(arrowstyle="-"),
+            bbox=bbox_props, zorder=0, va="center")
+
+    for i, p in enumerate(wedges):
+        ang = (p.theta2 - p.theta1)/2. + p.theta1
+        y = np.sin(np.deg2rad(ang))
+        x = np.cos(np.deg2rad(ang))
+        horizontalalignment = {-1: "right", 1: "left"}[int(np.sign(x))]
+        connectionstyle = f"angle,angleA=0,angleB={ang}"
+        kw["arrowprops"].update({"connectionstyle": connectionstyle})
+        ax.annotate(recipe[i], xy=(x, y), xytext=(1.35*np.sign(x), 1.4*y),
+                    horizontalalignment=horizontalalignment, **kw)
+
+    ax.set_title("Matplotlib bakery: A donut")'''
+
+
+def plot_other_bar(df: pd.DataFrame, title: str, column:str, show=False, sort='up'):
+    plt.cla()
+    
+    x, y = columnToXY(df, column)
     
     if(sort == 'up'):
         selectionSort(x, y, False)
@@ -225,6 +287,7 @@ def plot_other_bar(df: pd.DataFrame, title: str, column:str, show=False, sort='u
     plt.xticks(rotation=15, ha='center')
     plt.title(f"{title} (n={len(df[column])})")
     plt.ylabel("Count")
+    plt.gca().yaxis.set_major_formatter(ticker.FormatStrFormatter('%d'))
     plt.xlabel("")
 
     # Add labels to the bars
@@ -271,23 +334,8 @@ def plot_likert(df: pd.DataFrame, title: str, column:str, show=False):
     if(show):
         plt.show()
 
-if __name__ == '__main__':
 
-    source = 'responses.xlsx'
-    column_labels = ['timestamp', 'country', 'local resident', 'age', 'gender', 'view mode',                                #options
-               'overall experience', 'ease of navigation', 'enjoyed presentation', 'load speed',                            #likert
-               'recommend to friend', 'captures culture', 'use when visiting', 'showcases modernization', 'impactfulness',  #likert
-               'favorite story', 'why story', 'favorite place', 'why place',                                                #option, short ans
-               'something you liked', 'something you disliked', 'want to add anything', 'other comments']                   #long answer
-    
-    xls = pd.ExcelFile(source)
-
-    cn = pd.read_excel(source, 'Chinese', header=None, names=column_labels)
-    en = pd.read_excel(source, 'English', header=None, names=column_labels)
-
-    cn = cndf_to_en(cn)
-    data = pd.concat([en, cn], ignore_index=True)
-    
+def fixFavoriteStory(data: pd.DataFrame) -> pd.DataFrame:
     #fix favorite story column (parenthesis bug)
     for i in range(len(data['favorite story'])):
         row = data.loc[i, 'favorite story']
@@ -298,7 +346,17 @@ if __name__ == '__main__':
             data.loc[i, 'favorite story'] = 'Wang, Chun-Kai'
         elif ('Jian-Hong' in row):
             data.loc[i, 'favorite story'] = 'Wu, Jian-Hong'
+    
+    return data
 
+def setOtherCountries(data: pd.DataFrame) -> pd.DataFrame:
+    for i in range(len(data['country'])):
+        row = data.loc[i, 'country']
+        if(row != 'United States' and row != 'Taiwan'):
+            data.loc[i, 'country'] = 'Other'
+    return data
+
+def fixFavoritePlace(data: pd.DataFrame) -> pd.DataFrame:
     #fix favorite place column (remove chinese characters)
     for i in range(len(data['favorite place'])):
         row = data.loc[i, 'favorite place']
@@ -314,9 +372,66 @@ if __name__ == '__main__':
         elif ('Arch' in row):
             data.loc[i, 'favorite place'] = 'Shilin Architecture'
     
+    return data
+
+
+def taiwaneseOnly(data):
+    i = data[((data.country != 'Taiwan'))].index
+    data = data.drop(i)
+    data.reset_index()
+    return data
+
+def otherCountriesOnly(data):
     i = data[((data.country == 'Taiwan'))].index
     data = data.drop(i)
     data.reset_index()
+    return data
+
+def youngGroup(data):
+    i = data[((data.age != '18-29'))].index
+    data = data.drop(i)
+    data.reset_index()
+    return data
+
+def oldGroups(data):
+    i = data[((data.age == '18-29'))].index
+    data = data.drop(i)
+    data.reset_index()
+    return data
+
+def femaleOnly(data):
+    i = data[((data.gender == 'Male'))].index
+    data = data.drop(i)
+    data.reset_index()
+    return data
+
+def maleOnly(data):
+    i = data[((data.gender == 'Female'))].index
+    data = data.drop(i)
+    data.reset_index()
+    return data
+
+IMAGE_TRANSPARENCY = False
+IMAGE_TEXT_COLOR = 'black'
+IMAGE_AXIS_COLOR = 'black'
+OUTPUT_IMAGE_LOCATION = "./male/"
+SAVE = True
+DPI = 300
+
+if __name__ == '__main__':
+
+    source = 'responses.xlsx'
+    
+    xls = pd.ExcelFile(source)
+
+    cn = pd.read_excel(source, 'Chinese', header=None, names=column_labels)
+    en = pd.read_excel(source, 'English', header=None, names=column_labels)
+    cn = cndf_to_en(cn)
+    data = pd.concat([en, cn], ignore_index=True)
+    
+    data = fixFavoritePlace(data)
+    data = fixFavoriteStory(data)
+    data = setOtherCountries(data)
     
     if(SAVE):
         try:
@@ -338,9 +453,6 @@ if __name__ == '__main__':
     plot_other_bar(data, "Respondents' Country",        'country',          sort='up')
     plot_other_bar(data, "Respondents' Gender",         'gender',           sort='down')
 
-    
-    
-    
     #likert - not sorted
     plot_likert(data, "Overall Experience",                             'overall experience')
     plot_likert(data, "Easy to Navigate?",                              'ease of navigation')
@@ -353,6 +465,12 @@ if __name__ == '__main__':
     plot_likert(data, "How Much of an Impact Do You Feel?",             'impactfulness')
     
     
-    
+    plot_pie_other(data, "Country", 'country')
+    plot_pie_other(data, "Favorite_Story", 'favorite story')
+    plot_pie_other(data, "Favorite_Place", 'favorite place')
+    plot_pie_other(data, "View_Mode", 'view mode')
+    plot_pie_other(data, "Are_you_local", 'local resident')
+    plot_pie_other(data, "Age", 'age')
+    plot_pie_other(data, "Gender", 'gender')
     
     
