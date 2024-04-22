@@ -78,10 +78,10 @@ fav_place_options =  ['Zhishanyan Huiji Temple (芝山巖惠濟宮)', 'Taipei MR
 
 
 response_options = {
-'country' :                 ['United States', 'Taiwan', 'Other'],
+'country' :                 ['United States', 'Taiwan'], #or other
 'local resident' :          ['Yes', 'No'],
 'age' :                     ['18-29', '30-44', '45-59', '60+'],
-'gender' :                  ['Male', 'Female', 'Do not wish to say', 'other'],
+'gender' :                  ['Male', 'Female', 'Do not wish to say'], #or other
 'view mode' :               ['Smartphone', 'Tablet', 'Desktop / Laptop'],
 
 'overall experience' :      ['Very Poor', 'Poor', 'Neutral', 'Good',  'Very Good'],
@@ -93,12 +93,13 @@ response_options = {
 'captures culture' :        ['Stronly Disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly Agree'],
 'use when visiting' :       ['Very Unlikely', 'Unlikely', 'Neutral', 'Likely', 'Very Likely'],
 'showcases modernization' : ['Stronly Disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly Agree'],
-'impactfulness'   :         ['None', 'Little', 'Neutral', 'Impactful', 'Very Impactful'],
+'impactfulness'   :         ['None', 'Very Little', 'Somewhat', 'Impactful', 'Very Impactful'],
 
-'favorite story' :          ['Wu, Jian-Hong (吳儉鴻)', 'Wang, Chun-Kai (王俊凱)', 'Lily (莉莉)'],
-'favorite place' :          ['Zhishanyan Huiji Temple (芝山巖惠濟宮)', 'Taipei MRT (台北捷運)', 
-                             'Shilin Elementary School (士林國小)', 'Shilin Paper Mill (士林紙廠)', 
-                             'Shilin Architecture (士林建築)'],
+'favorite story' :          ['Wu, Jian-Hong', 'Wang, Chun-Kai', 'Lily'],
+#'favorite place' :          ['Zhishanyan Huiji Temple (芝山巖惠濟宮)', 'Taipei MRT (台北捷運)', 
+#                             'Shilin Elementary School (士林國小)', 'Shilin Paper Mill (士林紙廠)', 
+#                             'Shilin Architecture (士林建築)'],
+'favorite place':           ['Huiji Temple', 'Taipei MRT', 'Shilin Elementary', 'Shilin Paper Mill', 'Shilin Architecture']
 }
 
 
@@ -154,7 +155,7 @@ def cndf_to_en(cn: pd.DataFrame) -> pd.DataFrame:
 IMAGE_TRANSPARENCY = False
 IMAGE_TEXT_COLOR = 'black'
 IMAGE_AXIS_COLOR = 'black'
-OUTPUT_IMAGE_LOCATION = "./out/"
+OUTPUT_IMAGE_LOCATION = "./not_from_taiwan/"
 SAVE = True
 DPI = 300
 
@@ -197,34 +198,22 @@ def plot_other_bar(df: pd.DataFrame, title: str, column:str, show=False, sort='u
     y = []
 
     for option in response_options[column]:
-        print(option)
+        #print(option)
         d[option] = int(0)
     
-    for i in range(len(df[column])):
-        row = df.loc[i, column]
-        print(row)
-
-
+    #count up all the occurences of each response option
     for row in df[column]:
-        #if a new response, add it to the dict (country or gender)
+        #if a new response, add it to the dict (country or gender 'other')
         if(row not in d):
-            print(f"its not there bruv: {row}")
+            print(f"Adding new \'other\' option for {column}: \'{row}\'")
             d[row] = int(1)
         else:    
             d[row] = d[row] + int(1)
     
-
-    #every i in d.items() is a tuple of (key, val)]
-    #print(d.items())
+    #Put the dict into [x,y] to sort later and graph easier
     for i in d.items():
         x.append(i[0])
-        y.append(i[1])
-    
-    if(column == 'favorite story'):
-        x = ['Wu, Jian-Hong', 'Wang, Chun-Kai', 'Lily']
-
-    elif(column == 'favorite place'):
-        x = ['Huiji Temple', 'Taipei MRT', 'Shilin Elementary', 'Shilin Paper Mill', 'Shilin Architecture']
+        y.append(int(i[1]))
     
     if(sort == 'up'):
         selectionSort(x, y, False)
@@ -233,7 +222,7 @@ def plot_other_bar(df: pd.DataFrame, title: str, column:str, show=False, sort='u
         
     
     plt.bar(x, y, align='center')
-    plt.xticks(rotation=35, ha='left')
+    plt.xticks(rotation=15, ha='center')
     plt.title(f"{title} (n={len(df[column])})")
     plt.ylabel("Count")
     plt.xlabel("")
@@ -267,7 +256,7 @@ def plot_likert(df: pd.DataFrame, title: str, column:str, show=False):
     avg = float(sum) / total_resp
     ax = plt.bar(x, y)
     
-    plt.xticks(rotation=35, ha='center')
+    plt.xticks(rotation=15, ha='center')
     plt.title(f"{title} (n={len(df[column])}, avg={round(avg,1)})")
     plt.ylabel("Count")
     plt.xlabel("")
@@ -298,35 +287,61 @@ if __name__ == '__main__':
 
     cn = cndf_to_en(cn)
     data = pd.concat([en, cn], ignore_index=True)
+    
+    #fix favorite story column (parenthesis bug)
+    for i in range(len(data['favorite story'])):
+        row = data.loc[i, 'favorite story']
+        #print(row)
+        if('Lily' in row):
+            data.loc[i, 'favorite story'] = 'Lily'
+        elif ('Wang' in row):
+            data.loc[i, 'favorite story'] = 'Wang, Chun-Kai'
+        elif ('Jian-Hong' in row):
+            data.loc[i, 'favorite story'] = 'Wu, Jian-Hong'
 
-    i = data[((data.country != 'United States'))].index
-    #data = data.drop(i)
-
+    #fix favorite place column (remove chinese characters)
+    for i in range(len(data['favorite place'])):
+        row = data.loc[i, 'favorite place']
+        #print(row)
+        if('Huiji' in row):
+            data.loc[i, 'favorite place'] = 'Huiji Temple'
+        elif ('MRT' in row):
+            data.loc[i, 'favorite place'] = 'Taipei MRT'
+        elif ('Elementary' in row):
+            data.loc[i, 'favorite place'] = 'Shilin Elementary'
+        elif ('Paper' in row):
+            data.loc[i, 'favorite place'] = 'Shilin Paper Mill'
+        elif ('Arch' in row):
+            data.loc[i, 'favorite place'] = 'Shilin Architecture'
+    
+    i = data[((data.country == 'Taiwan'))].index
+    data = data.drop(i)
+    data.reset_index()
+    
     if(SAVE):
         try:
             shutil.rmtree(OUTPUT_IMAGE_LOCATION)
         except FileNotFoundError:
             pass
-
         if not os.path.exists(OUTPUT_IMAGE_LOCATION):
             os.makedirs(OUTPUT_IMAGE_LOCATION)
         
     setMatplotParams()
     
-    #              df    plot title                     column title                    sort direction (default = up)
-    plot_other_bar(data, "Favorite Story",              'favorite story', show=True,    sort='down')
-    plot_other_bar(data, "Favorite \'Place\' Webpage",  'favorite place', show=True,    sort='down')
+    #              df    plot title                     column title        sort direction (default = up)
+    plot_other_bar(data, "Favorite Story",              'favorite story',   sort='no')
+    plot_other_bar(data, "Favorite \'Place\' Webpage",  'favorite place',   sort='down')
 
-    '''plot_other_bar(data, "Viewing Device",          'view mode',        sort='up')
-    plot_other_bar(data, 'Are You a Local?',        'local resident',   sort='no')
-    plot_other_bar(data, "Age",                     'age',              sort='no')
-    plot_other_bar(data, "Respondents' Country",    'country',          sort='up')
-    plot_other_bar(data, "Respondents' Gender",     'gender',           sort='down')
+    plot_other_bar(data, "Viewing Device",              'view mode',        sort='up')
+    plot_other_bar(data, 'Are You a Local?',            'local resident',   sort='no')
+    plot_other_bar(data, "Age",                         'age',              sort='no')
+    plot_other_bar(data, "Respondents' Country",        'country',          sort='up')
+    plot_other_bar(data, "Respondents' Gender",         'gender',           sort='down')
 
     
     
     
-    #likert-not sorted
+    #likert - not sorted
     plot_likert(data, "Overall Experience",                             'overall experience')
     plot_likert(data, "Easy to Navigate?",                              'ease of navigation')
     plot_likert(data, "Enjoyed Presentation of Material",               'enjoyed presentation')
@@ -335,7 +350,7 @@ if __name__ == '__main__':
     plot_likert(data, "\'This Website Captures Shilin\'s Culture\'",    'captures culture')
     plot_likert(data, "Would Use Website When Visiting Shilin",         'use when visiting')
     plot_likert(data, "\'This Website Captures Modernization\'",        'showcases modernization')
-    plot_likert(data, "How Much of an Impact Do You Feel?",             'impactfulness')'''
+    plot_likert(data, "How Much of an Impact Do You Feel?",             'impactfulness')
     
     
     
