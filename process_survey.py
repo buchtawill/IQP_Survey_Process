@@ -297,7 +297,7 @@ def plot_likert(df: pd.DataFrame, title: str, column:str, show=False):
         sum += y[i] * (i+1)
 
     avg = float(sum) / total_resp
-    ax = plt.bar(x, y)
+    ax = plt.bar(x, y, color='#00aaff')
     
     for i in range(len(x)):
         x[i] = x[i]+f' ({i+1})'
@@ -351,8 +351,11 @@ def likertTwoGroups(df1: pd.DataFrame, label1:str, df2: pd.DataFrame, label2: st
     y2avg = float(sum) / totaly2
     
     x_axis = np.arange(len(x)) 
-    plt.bar(x_axis - barSpacing, y1, 0.4, label = f'{label1} avg={round(y1avg,1)}') 
-    plt.bar(x_axis + barSpacing, y2, 0.4, label = f'{label2} avg={round(y2avg,1)}') 
+    plt.bar(x_axis - barSpacing, y1, 0.4, label = f'{label1} avg={round(y1avg,1)}', color='#00aaff') 
+    plt.bar(x_axis + barSpacing, y2, 0.4, label = f'{label2} avg={round(y2avg,1)}', color='#ff3b94') 
+
+    #plt.bar(x_axis - barSpacing, y1, 0.4, label = f'{label1} avg={round(y1avg,1)}', color='#f5f232') 
+    #plt.bar(x_axis + barSpacing, y2, 0.4, label = f'{label2} avg={round(y2avg,1)}', color='#04d435') 
     
     for i in range(len(x)):
         x[i] = x[i]+f' ({i+1})'
@@ -498,7 +501,7 @@ def maleOnly(data):
 IMAGE_TRANSPARENCY = False
 IMAGE_TEXT_COLOR = 'black'
 IMAGE_AXIS_COLOR = 'black'
-OUTPUT_IMAGE_LOCATION = "./all/"
+OUTPUT_IMAGE_LOCATION = "./taiwanese_v_visitors_color/"
 SAVE = True
 DPI = 300
 
@@ -540,7 +543,7 @@ if __name__ == '__main__':
     #otherTwoGroups(guys, 'Male', girls, "Female", "Favorite Story (Female and Male)", 'favorite story')
     #otherTwoGroups(guys, 'Male', girls, "Female", "Favorite place (Female and Male)", 'favorite place')
     
-    default_graphs(data)
+    #default_graphs(data)
     #two_group_likerts(guys, 'Male', girls, 'Female')
-    #two_group_likerts(taiwanese, 'Taiwanese', visitors, 'Visitors')
+    two_group_likerts(taiwanese, 'Taiwanese', visitors, 'Visitors')
     #two_group_likerts(old, '30+', young, '18-29')
